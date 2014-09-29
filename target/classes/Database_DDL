@@ -1,0 +1,29 @@
+CREATE SCHEMA `bv_metrics` ;
+
+CREATE TABLE `project` (
+  `projectID` int(11) NOT NULL DEFAULT '1',
+  `name` varchar(45) DEFAULT NULL,
+  `key` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`projectID`),
+  UNIQUE KEY `projectID_UNIQUE` (`projectID`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+
+CREATE TABLE `issue` (
+  `issueID` int(11) NOT NULL DEFAULT '1',
+  `projectID` int(11) NOT NULL DEFAULT '1',
+  `key` varchar(45) DEFAULT NULL,
+  `priority` varchar(45) DEFAULT NULL,
+  `status` varchar(45) DEFAULT NULL,
+  `desc` varchar(45) DEFAULT NULL,
+  `assignee` varchar(45) DEFAULT NULL,
+  `reporter` varchar(45) DEFAULT NULL,
+  `createDate` date DEFAULT NULL,
+  `updateDate` date DEFAULT NULL,
+  PRIMARY KEY (`issueID`),
+  UNIQUE KEY `issueID_UNIQUE` (`issueID`),
+  KEY `FK_projectID_idx` (`projectID`),
+  CONSTRAINT `FK_projectID` FOREIGN KEY (`projectID`) REFERENCES `project` (`projectID`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+

@@ -1,0 +1,5 @@
+VM options:
+-Denv=dev
+
+Program Arguments
+getAllProjects
