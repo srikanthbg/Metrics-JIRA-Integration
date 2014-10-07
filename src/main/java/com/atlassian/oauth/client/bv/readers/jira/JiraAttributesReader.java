@@ -4,6 +4,7 @@ import com.atlassian.oauth.client.bv.start.AtlassianOAuthClient;
 import com.atlassian.oauth.client.bv.model.jira.Issue;
 import com.atlassian.oauth.client.bv.model.jira.Project;
 import com.atlassian.oauth.client.bv.utils.JiraJsonParser;
+import com.atlassian.oauth.client.bv.utils.JiraProps;
 import com.atlassian.oauth.client.bv.utils.Util;
 import com.google.gson.*;
 import org.apache.log4j.Logger;
@@ -21,11 +22,11 @@ import java.util.Properties;
 public class JiraAttributesReader extends JiraJsonParser {
 
     private AtlassianOAuthClient atlassianOAuthClient;
-    private Properties props;
+    private JiraProps props;
 
     static Logger log = Logger.getLogger(JiraAttributesReader.class.getName());
 
-    public JiraAttributesReader(AtlassianOAuthClient atlassianOAuthClient, Properties props)
+    public JiraAttributesReader(AtlassianOAuthClient atlassianOAuthClient, JiraProps props)
     {
         this.atlassianOAuthClient = atlassianOAuthClient;
         this.props = props;
@@ -34,10 +35,10 @@ public class JiraAttributesReader extends JiraJsonParser {
     public List<Project> getAllProjects()
     {
 
-        String projectQuery = props.getProperty("jiraServer")+props.getProperty("getProjects");
+        String projectQuery = props.getJiraServer()+props.getGetProjects();
         log.info("project List Query --> " + projectQuery);
 
-        String getAllProjectResponse = atlassianOAuthClient.makeAuthenticatedRequest(projectQuery,props.getProperty("accessToken"));
+        String getAllProjectResponse = atlassianOAuthClient.makeAuthenticatedRequest(projectQuery,props.getAccessToken());
 
 
 
@@ -112,11 +113,11 @@ public class JiraAttributesReader extends JiraJsonParser {
              */
 
             String encodedProjectName = "'" + URLEncoder.encode(projectName,"UTF-8") + "'";
-            String issueCountQuery = props.getProperty("jiraServer")+props.getProperty("getIssues")+ encodedProjectName +
-                    props.getProperty("getIssuesFilter")+"0";
+            String issueCountQuery = props.getJiraServer()+props.getGetIssues()+ encodedProjectName +
+                    props.getGetIssuesFilter()+"0";
             log.info("issue count query --> " + issueCountQuery);
 
-            String issueCountResponse = atlassianOAuthClient.makeAuthenticatedRequest(issueCountQuery,props.getProperty("accessToken"));
+            String issueCountResponse = atlassianOAuthClient.makeAuthenticatedRequest(issueCountQuery,props.getAccessToken());
             log.info("Issue count response --> " + issueCountResponse);
 
             JsonObject jsonObjectIssueCountObject = (JsonObject)jsonParser.parse(issueCountResponse);
@@ -125,7 +126,7 @@ public class JiraAttributesReader extends JiraJsonParser {
                 set batch attributes to query JIRA
              */
             String issuesCount = jsonObjectIssueCountObject.get("total").toString();
-            int batchSize = Integer.parseInt(props.getProperty("batchSize"));
+            int batchSize = Integer.parseInt(props.getBatchSize());
             int batchLoopCount = Util.getBatchCount(Integer.parseInt(issuesCount),batchSize);
             int startAt=0;
 
@@ -133,8 +134,8 @@ public class JiraAttributesReader extends JiraJsonParser {
                 Get all issues of the project
              */
 
-            String issueQuery = props.getProperty("jiraServer")+
-                props.getProperty("getIssues")+ encodedProjectName  + props.getProperty("getIssuesFilter");
+            String issueQuery = props.getJiraServer()+
+                props.getGetIssues()+ encodedProjectName  + props.getGetIssuesFilter();
             String issueQueryLoop = "";
 
             /*
@@ -148,7 +149,7 @@ public class JiraAttributesReader extends JiraJsonParser {
                 startAt = startAt + batchSize;
                 log.info("Issue Query --> " + issueQueryLoop);
 
-                String issuesResponse = atlassianOAuthClient.makeAuthenticatedRequest(issueQueryLoop,props.getProperty("accessToken"));
+                String issuesResponse = atlassianOAuthClient.makeAuthenticatedRequest(issueQueryLoop,props.getAccessToken());
                 log.info("Issue response --> " + issuesResponse);
 
                 JsonObject jsonObject = (JsonObject)jsonParser.parse(issuesResponse);

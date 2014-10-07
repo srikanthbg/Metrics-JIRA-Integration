@@ -1,18 +1,15 @@
 package com.atlassian.oauth.client.bv.start;
 
-import com.atlassian.oauth.client.bv.dao.jira.ProjectDAO;
 import com.atlassian.oauth.client.bv.model.jira.Issue;
-import com.atlassian.oauth.client.bv.model.jira.Project;
 import com.atlassian.oauth.client.bv.process.*;
 import com.atlassian.oauth.client.bv.process.Process;
 import com.atlassian.oauth.client.bv.readers.jira.JiraAttributesReader;
-import com.atlassian.oauth.client.bv.service.jira.ProjectService;
+import com.atlassian.oauth.client.bv.utils.JiraProps;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.sun.org.apache.xml.internal.security.utils.Base64;
 
 import java.io.*;
-import java.net.URL;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -22,27 +19,15 @@ import java.util.Properties;
 import org.apache.log4j.Logger;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import javax.annotation.Resource;
-
 
 public class JIRAOAuthClient
 {
 
-    public static ProjectService getProjectService() {
-        return projectService;
-    }
-
-    public static void setProjectService(ProjectService projectService) {
-        JIRAOAuthClient.projectService = projectService;
-    }
-
-    @Resource(name = "ProjectService")
-    private static ProjectService projectService;
 
 
     static Logger log = Logger.getLogger(JIRAOAuthClient.class.getName());
     private static final String CALLBACK_URI = "";
-    protected static  String CONSUMER_PRIVATE_KEY = Base64.encode(getPrivateKey("private.der").getEncoded());
+    protected static  String CONSUMER_PRIVATE_KEY = Base64.encode(getPrivateKey("./resources/private.der").getEncoded());
 
     public enum Command
     {
@@ -71,21 +56,9 @@ public class JIRAOAuthClient
          */
 
         ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("spring-config.xml");
-        Properties props = new Properties();
-        InputStream input = null;
+         JiraProps jiraProps = (JiraProps)context.getBean("jiraProps");
 
-        try {
-            ClassLoader loader = Thread.currentThread().getContextClassLoader();
-            input = loader.getResourceAsStream("jira.properties");
-            props.load(input);
-        } catch (FileNotFoundException e) {
-            log.error(e.getMessage() + " --> " + "jira properties not found");
-        } catch (IOException e) {
-            log.error(e.getMessage() + " --> " + "IO exception");
-        }
-
-        final String CONSUMER_KEY = props.getProperty("consumerKey");
-
+        final String CONSUMER_KEY = jiraProps.getConsumerKey();
 
         ArrayList<String> arguments = Lists.newArrayList(args);
         if (arguments.isEmpty())
@@ -95,19 +68,17 @@ public class JIRAOAuthClient
         String action = arguments.get(0);
         if (Command.REQUEST_TOKEN.getName().equals(action))
         {
-            String baseUrl = arguments.get(1);
+
+            String baseUrl = jiraProps.getJiraServer();
             String callBack = "";
-            if (arguments.size() == 3)
-            {
-                callBack = arguments.get(2);
-            }
+
             AtlassianOAuthClient jiraoAuthClient = new AtlassianOAuthClient(CONSUMER_KEY, CONSUMER_PRIVATE_KEY, baseUrl, callBack);
             //STEP 1: Get request token
             TokenSecretVerifierHolder requestToken = jiraoAuthClient.getRequestToken();
             String authorizeUrl = jiraoAuthClient.getAuthorizeUrlForToken(requestToken.token);
-            System.out.println("Token is " + requestToken.token);
-            System.out.println("Token secret is " + requestToken.secret);
-            System.out.println("Retrieved request token. go to " + authorizeUrl);
+            log.info("Token is " + requestToken.token);
+            log.info("Token secret is " + requestToken.secret);
+            log.info("Retrieved request token. go to " + authorizeUrl);
         }
         else if (Command.ACCESS_TOKEN.getName().equals(action))
         {
@@ -117,7 +88,7 @@ public class JIRAOAuthClient
             String tokenSecret = arguments.get(3);
             String verifier = arguments.get(4);
             String accessToken = jiraoAuthClient.swapRequestTokenForAccessToken(requestToken, tokenSecret, verifier);
-            System.out.println("Access token is : " + accessToken);
+            log.info("Access token is : " + accessToken);
         }
         else if (Command.REQUEST.getName().equals(action))
         {
@@ -129,14 +100,14 @@ public class JIRAOAuthClient
             String accessToken = arguments.get(1);
             String url = arguments.get(2);
             String responseAsString = jiraoAuthClient.makeAuthenticatedRequest(url, accessToken);
-            System.out.println("RESPONSE IS" + responseAsString);
+            log.info("RESPONSE IS" + responseAsString);
         }
         else
         {
 
 
             AtlassianOAuthClient jiraoAuthClient = new AtlassianOAuthClient(CONSUMER_KEY, CONSUMER_PRIVATE_KEY, null, CALLBACK_URI);
-            JiraAttributesReader jiraAttributesReader = new JiraAttributesReader(jiraoAuthClient,props);
+            JiraAttributesReader jiraAttributesReader = new JiraAttributesReader(jiraoAuthClient,jiraProps);
 
 
             if(Command.GET_ALL_ISSUES.getName().equals(action))
@@ -187,11 +158,14 @@ public class JIRAOAuthClient
 
     private static PrivateKey getPrivateKey(String filename) {
         try {
-            URL path = ClassLoader.getSystemResource(filename);
-            if (path == null) {
+            //URL path = ClassLoader.getSystemResource(filename);
+           // InputStream inputStream = ClassLoader.getSystemResourceAsStream(filename);
+           /* if (path == null) {
                 //The file was not found, insert error handling here
             }
-            File f = new File(path.toURI());
+            File f = new File(path.toURI());*/
+
+            File f = new File(filename);
 
             FileInputStream fis = new FileInputStream(f);
             DataInputStream dis = new DataInputStream(fis);

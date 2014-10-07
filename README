@@ -1,5 +1,5 @@
 VM options:
--Denv=dev
+-Denv=dev -Dresource=/Users/administrator/Desktop/sample/Metrics-JIRA-Integration/resources
 
 Program Arguments
 getAllProjects

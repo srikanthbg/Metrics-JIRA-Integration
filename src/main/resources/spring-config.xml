@@ -19,7 +19,8 @@
     <bean id="placeholderConfig" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="locations">
             <list>
-                <value>classpath:properties/applicationConfig_${env}.properties</value>
+                <value>file:///${resource}/properties/applicationConfig_${env}.properties</value>
+                <value>file:///${resource}/properties/jira_${env}.properties</value>
             </list>
         </property>
     </bean>
@@ -31,6 +32,16 @@
         <property name="url" value="${jdbc.url}" />
         <property name="username" value="${jdbc.username}" />
         <property name="password" value="${jdbc.password}" />
+    </bean>
+
+    <bean id="jiraProps" class="com.atlassian.oauth.client.bv.utils.JiraProps">
+        <property name="accessToken" value="${accessToken}"/>
+        <property name="jiraServer" value="${jiraServer}"/>
+        <property name="consumerKey" value="${consumerKey}"/>
+        <property name="getProjects" value="${getProjects}"/>
+        <property name="getIssues" value="${getIssues}"/>
+        <property name="getIssuesFilter" value="${getIssuesFilter}"/>
+        <property name="batchSize" value="${batchSize}"/>
     </bean>
 
 </beans>

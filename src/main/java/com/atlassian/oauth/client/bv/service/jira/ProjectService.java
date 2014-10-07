@@ -17,9 +17,6 @@ public class ProjectService {
     @Resource(name = "ProjectDAO")
     private ProjectDAO projectDao;
 
-    public ProjectService(){
-        System.out.println("INSIDE THE CONSTRUCTOR");
-    }
 
     public void insertBatch(final List<Project> projects)
     {
