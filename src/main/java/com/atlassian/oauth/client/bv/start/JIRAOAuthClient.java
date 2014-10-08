@@ -69,7 +69,7 @@ public class JIRAOAuthClient
         if (Command.REQUEST_TOKEN.getName().equals(action))
         {
 
-            String baseUrl = jiraProps.getJiraServer();
+            String baseUrl = jiraProps.getJiraBase();
             String callBack = "";
 
             AtlassianOAuthClient jiraoAuthClient = new AtlassianOAuthClient(CONSUMER_KEY, CONSUMER_PRIVATE_KEY, baseUrl, callBack);
@@ -82,11 +82,11 @@ public class JIRAOAuthClient
         }
         else if (Command.ACCESS_TOKEN.getName().equals(action))
         {
-            String baseUrl = arguments.get(1);
+            String baseUrl = jiraProps.getJiraBase();
             AtlassianOAuthClient jiraoAuthClient = new AtlassianOAuthClient(CONSUMER_KEY, CONSUMER_PRIVATE_KEY, baseUrl, CALLBACK_URI);
-            String requestToken = arguments.get(2);
-            String tokenSecret = arguments.get(3);
-            String verifier = arguments.get(4);
+            String requestToken = jiraProps.getRequestToken();
+            String tokenSecret = jiraProps.getTokenSecret();
+            String verifier = jiraProps.getVerifier();
             String accessToken = jiraoAuthClient.swapRequestTokenForAccessToken(requestToken, tokenSecret, verifier);
             log.info("Access token is : " + accessToken);
         }

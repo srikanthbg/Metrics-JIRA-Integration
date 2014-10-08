@@ -42,6 +42,10 @@
         <property name="getIssues" value="${getIssues}"/>
         <property name="getIssuesFilter" value="${getIssuesFilter}"/>
         <property name="batchSize" value="${batchSize}"/>
+        <property name="jiraBase" value="${jiraBase}"/>
+        <property name="requestToken" value="${requestToken}"/>
+        <property name="tokenSecret" value="${tokenSecret}"/>
+        <property name="verifier" value="${verifier}"/>
     </bean>
 
 </beans>

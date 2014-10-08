@@ -1,5 +1,38 @@
+1.Generate public and private key on the server:
+
+https://www.madboa.com/geek/openssl/#key-rsa
+
+
+2.Follow the steps in URL to do the OAuth Dance :)
+
+https://developer.atlassian.com/display/JIRADEV/JIRA%2520REST%2520API%2520Example%2520-%2520OAuth%2520authentication
+
+a. Obtain request token
+java -jar JiraMetrics.jar requestToken JIRA_BASE_URL CALLBACK_URL
+
+b. verify the token
+https://adfatlassian01.austin.bazaarvoice.com/jira//plugins/servlet/oauth/authorize?oauth_token={$oauth_token}
+
+c. swap request token with access token.
+java -jar JiraMetrics.jar accessToken JIRA_BASE_URL REQUEST_TOKEN TOKEN_SECRET VERIFIER
+
+3. Main class:
+
+com.atlassian.oauth.client.bv.start.JIRAOAuthClient
+
+1. To generate request token:
+
+VM Options:
+-Denv=dev -Dresource={pwd of Project jar}/resources
+
+program arguments:
+requestToken
+
+
+2. To get All projects:
+
 VM options:
--Denv=dev -Dresource=/Users/administrator/Desktop/sample/Metrics-JIRA-Integration/resources
+-Denv=dev -Dresource={pwd of Project jar}/resources
 
 Program Arguments
 getAllProjects
