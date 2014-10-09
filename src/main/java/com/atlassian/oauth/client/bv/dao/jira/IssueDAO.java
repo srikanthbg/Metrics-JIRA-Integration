@@ -32,6 +32,7 @@ public class IssueDAO extends AbstractBaseDAO {
                               ps.setString(7, issue.getReporter());
                               ps.setDate(8, issue.getCreateDate());
                               ps.setDate(9, issue.getUpdateDate());
+                              logger.info("prepared stmt -->" +ps);
                           }
 
                           public int getBatchSize() {
@@ -39,12 +40,4 @@ public class IssueDAO extends AbstractBaseDAO {
                           }
                       });
                 }
-
-
-            public void insertBatch2(final String sql){
-
-        	        getJdbcTemplate().batchUpdate(new String[]{sql});
-
-        	    }
-
 }

@@ -2,6 +2,8 @@ package com.atlassian.oauth.client.bv.dao.jira;
 
 import com.atlassian.oauth.client.bv.dao.AbstractBaseDAO;
 import com.atlassian.oauth.client.bv.model.jira.Project;
+import com.atlassian.oauth.client.bv.start.JIRAOAuthClient;
+import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 
@@ -18,6 +20,8 @@ import static com.atlassian.oauth.client.bv.dao.support.SQLConstants.WRITE_PROJE
 @Repository("ProjectDAO")
 public class ProjectDAO extends AbstractBaseDAO {
 
+    static Logger log = Logger.getLogger(ProjectDAO.class.getName());
+
     public void insertBatch(final List<Project> projects){
 
         	          getJdbcTemplate().batchUpdate(WRITE_PROJECT, new BatchPreparedStatementSetter() {
@@ -28,7 +32,7 @@ public class ProjectDAO extends AbstractBaseDAO {
                               ps.setInt(1, project.getId());
                               ps.setString(2, project.getName());
                               ps.setString(3, project.getKey());
-                              System.out.println(i + "-->" + ps);
+                              log.info(i + "-->" + ps);
                           }
 
                           @Override
@@ -37,12 +41,5 @@ public class ProjectDAO extends AbstractBaseDAO {
                           }
                       });
                 }
-
-
-            public void insertBatch2(final String sql){
-
-        	        getJdbcTemplate().batchUpdate(new String[]{sql});
-
-        	    }
 
 }

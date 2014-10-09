@@ -9,8 +9,8 @@ import org.apache.log4j.Logger;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Srikanth BG on 9/26/14.
@@ -23,7 +23,7 @@ public class ProcessProject implements Process {
     private ProjectService projectService;
 
     @Override
-    public void processModel(JiraAttributesReader jiraAttributesReader, ClassPathXmlApplicationContext context) {
+    public void processModel(JiraAttributesReader jiraAttributesReader, ClassPathXmlApplicationContext context, Map params) {
 
         List<Project> listProjects = jiraAttributesReader.getAllProjects();
 

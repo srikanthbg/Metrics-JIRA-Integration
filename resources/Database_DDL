@@ -15,7 +15,7 @@ CREATE TABLE `issue` (
   `key` varchar(45) DEFAULT NULL,
   `priority` varchar(45) DEFAULT NULL,
   `status` varchar(45) DEFAULT NULL,
-  `desc` varchar(45) DEFAULT NULL,
+  `desc` varchar(200) DEFAULT NULL,
   `assignee` varchar(45) DEFAULT NULL,
   `reporter` varchar(45) DEFAULT NULL,
   `createDate` date DEFAULT NULL,

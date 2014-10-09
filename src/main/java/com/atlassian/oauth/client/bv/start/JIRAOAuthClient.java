@@ -14,8 +14,10 @@ import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
+
 import org.apache.log4j.Logger;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -48,101 +50,90 @@ public class JIRAOAuthClient
         }
     }
 
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) {
 
         /*
             Load the jira properties
          */
 
         ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("spring-config.xml");
-         JiraProps jiraProps = (JiraProps)context.getBean("jiraProps");
+        JiraProps jiraProps = (JiraProps) context.getBean("jiraProps");
 
         final String CONSUMER_KEY = jiraProps.getConsumerKey();
 
         ArrayList<String> arguments = Lists.newArrayList(args);
-        if (arguments.isEmpty())
-        {
-            throw new IllegalArgumentException("No command specified. Use one of " + getCommandNames() );
-        }
-        String action = arguments.get(0);
-        if (Command.REQUEST_TOKEN.getName().equals(action))
-        {
 
-            String baseUrl = jiraProps.getJiraBase();
-            String callBack = "";
+        try {
+            if (arguments.isEmpty()) {
+                throw new IllegalArgumentException("No command specified. Use one of " + getCommandNames());
+            }
+            String action = arguments.get(0);
 
-            AtlassianOAuthClient jiraoAuthClient = new AtlassianOAuthClient(CONSUMER_KEY, CONSUMER_PRIVATE_KEY, baseUrl, callBack);
-            //STEP 1: Get request token
-            TokenSecretVerifierHolder requestToken = jiraoAuthClient.getRequestToken();
-            String authorizeUrl = jiraoAuthClient.getAuthorizeUrlForToken(requestToken.token);
-            log.info("Token is " + requestToken.token);
-            log.info("Token secret is " + requestToken.secret);
-            log.info("Retrieved request token. go to " + authorizeUrl);
-        }
-        else if (Command.ACCESS_TOKEN.getName().equals(action))
-        {
-            String baseUrl = jiraProps.getJiraBase();
-            AtlassianOAuthClient jiraoAuthClient = new AtlassianOAuthClient(CONSUMER_KEY, CONSUMER_PRIVATE_KEY, baseUrl, CALLBACK_URI);
-            String requestToken = jiraProps.getRequestToken();
-            String tokenSecret = jiraProps.getTokenSecret();
-            String verifier = jiraProps.getVerifier();
-            String accessToken = jiraoAuthClient.swapRequestTokenForAccessToken(requestToken, tokenSecret, verifier);
-            log.info("Access token is : " + accessToken);
-        }
-        else if (Command.REQUEST.getName().equals(action))
-        {
+            if (Command.REQUEST_TOKEN.getName().equals(action)) {
+
+                String baseUrl = jiraProps.getJiraBase();
+                String callBack = "";
+
+                AtlassianOAuthClient jiraoAuthClient = new AtlassianOAuthClient(CONSUMER_KEY, CONSUMER_PRIVATE_KEY, baseUrl, callBack);
+                //STEP 1: Get request token
+                TokenSecretVerifierHolder requestToken = jiraoAuthClient.getRequestToken();
+                String authorizeUrl = jiraoAuthClient.getAuthorizeUrlForToken(requestToken.token);
+                log.info("Token is " + requestToken.token);
+                log.info("Token secret is " + requestToken.secret);
+                log.info("Retrieved request token. go to " + authorizeUrl);
+            } else if (Command.ACCESS_TOKEN.getName().equals(action)) {
+                String baseUrl = jiraProps.getJiraBase();
+                AtlassianOAuthClient jiraoAuthClient = new AtlassianOAuthClient(CONSUMER_KEY, CONSUMER_PRIVATE_KEY, baseUrl, CALLBACK_URI);
+                String requestToken = jiraProps.getRequestToken();
+                String tokenSecret = jiraProps.getTokenSecret();
+                String verifier = jiraProps.getVerifier();
+                String accessToken = jiraoAuthClient.swapRequestTokenForAccessToken(requestToken, tokenSecret, verifier);
+                log.info("Access token is : " + accessToken);
+            } else if (Command.REQUEST.getName().equals(action)) {
             /*
                 Sample Request Test
              */
 
-            AtlassianOAuthClient jiraoAuthClient = new AtlassianOAuthClient(CONSUMER_KEY, CONSUMER_PRIVATE_KEY, null, CALLBACK_URI);
-            String accessToken = arguments.get(1);
-            String url = arguments.get(2);
-            String responseAsString = jiraoAuthClient.makeAuthenticatedRequest(url, accessToken);
-            log.info("RESPONSE IS" + responseAsString);
-        }
-        else
-        {
+                AtlassianOAuthClient jiraoAuthClient = new AtlassianOAuthClient(CONSUMER_KEY, CONSUMER_PRIVATE_KEY, null, CALLBACK_URI);
+                String accessToken = arguments.get(1);
+                String url = arguments.get(2);
+                String responseAsString = jiraoAuthClient.makeAuthenticatedRequest(url, accessToken);
+                log.info("RESPONSE IS" + responseAsString);
+            } else {
 
 
-            AtlassianOAuthClient jiraoAuthClient = new AtlassianOAuthClient(CONSUMER_KEY, CONSUMER_PRIVATE_KEY, null, CALLBACK_URI);
-            JiraAttributesReader jiraAttributesReader = new JiraAttributesReader(jiraoAuthClient,jiraProps);
+                AtlassianOAuthClient jiraoAuthClient = new AtlassianOAuthClient(CONSUMER_KEY, CONSUMER_PRIVATE_KEY, null, CALLBACK_URI);
+                JiraAttributesReader jiraAttributesReader = new JiraAttributesReader(jiraoAuthClient, jiraProps);
+                Map<Object, Object> params = new HashMap<Object, Object>();
 
 
-            if(Command.GET_ALL_ISSUES.getName().equals(action))
-            {
-                List<Issue> listAllIssues = jiraAttributesReader.getAllIssues();
-                Gson gson = new Gson();
-                log.info(gson.toJson(listAllIssues));
-            }
-            else if(Command.GET_ALL_PROJECTS.getName().equals(action))
-            {
+                if (Command.GET_ALL_ISSUES.getName().equals(action)) {
+                    List<Issue> listAllIssues = jiraAttributesReader.getAllIssues();
+                    Gson gson = new Gson();
+                    log.info(gson.toJson(listAllIssues));
+                } else if (Command.GET_ALL_PROJECTS.getName().equals(action)) {
 
-                Process process = new ProcessProject();
-                process.processModel(jiraAttributesReader,context);
-            }
+                    Process process = new ProcessProject();
+                    params.clear();
+                    process.processModel(jiraAttributesReader, context, params);
+                } else if (Command.GET_ISSUES_OF_PROJECT.getName().equals(action)) {
 
-            else if(Command.GET_ISSUES_OF_PROJECT.getName().equals(action))
-            {
-                String projectName = arguments.get(1);
+                    Process process = new ProcessProjectIssue();
+                    String projectName = arguments.get(1);
 
-                List<Issue> issueList = jiraAttributesReader.getProjectIssues(projectName);
+                    params.clear();
+                    params.put("projectName", projectName);
 
-                for (Issue issue : issueList)
-                {
-                    log.info(issue.toString());
-
+                    process.processModel(jiraAttributesReader, context, params);
+                } else {
+                    log.error("Command " + action + " not supported. Only " + getCommandNames() + " are supported.");
                 }
-
-                Gson gson = new Gson();
-                log.info(gson.toJson(issueList));
-
             }
-
-            else{
-                log.error("Command " + action + " not supported. Only " + getCommandNames() + " are supported.");
-            }
+        }catch(Exception e)
+        {
+            log.error("FATAL exception processing JIRA data");
+            log.error(e.getMessage());
+            log.error(e.getCause());
         }
     }
 
