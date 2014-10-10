@@ -86,20 +86,6 @@ public class JiraAttributesReader extends JiraJsonParser {
         }
     }
 
-    public List<Issue> getAllIssues()
-    {
-        List<Project> listProject = getAllProjects();
-        List<Issue> listAllIssues = new ArrayList<Issue>();
-
-        for(Project projectObj : listProject)
-        {
-            List<Issue> issueList = getProjectIssues(projectObj.getName());
-            listAllIssues.addAll(issueList);
-        }
-
-        return listAllIssues;
-    }
-
     public List<Issue> getProjectIssues(String projectName)
     {
         try

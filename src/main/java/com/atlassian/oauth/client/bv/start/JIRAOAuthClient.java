@@ -108,10 +108,12 @@ public class JIRAOAuthClient
 
 
                 if (Command.GET_ALL_ISSUES.getName().equals(action)) {
-                    List<Issue> listAllIssues = jiraAttributesReader.getAllIssues();
-                    Gson gson = new Gson();
-                    log.info(gson.toJson(listAllIssues));
-                } else if (Command.GET_ALL_PROJECTS.getName().equals(action)) {
+                    Process process = new ProcessIssue();
+                    params.clear();
+                    process.processModel(jiraAttributesReader, context, params);
+                }
+
+                else if (Command.GET_ALL_PROJECTS.getName().equals(action)) {
 
                     Process process = new ProcessProject();
                     params.clear();
