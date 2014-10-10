@@ -42,8 +42,10 @@ public class ProcessIssue implements Process  {
                   continue;
               }
 
-                log.info("failed projects to be re-run -->" + failedProjects.toString());
+
             }
+
+        log.info("failed projects to be re-run -->" + failedProjects.toString());
 
     }
 }
