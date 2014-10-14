@@ -1,5 +1,14 @@
 package com.atlassian.oauth.client.bv.utils;
 
+import org.joda.time.DateTime;
+import org.joda.time.Days;
+
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.security.KeyFactory;
+import java.security.PrivateKey;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.sql.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -36,4 +45,41 @@ public class Util {
         else return 0;
     }
 
+   public static int getSqlDateDiff(Date d1, Date d2) {
+
+       /*
+            D1 past time , D2 present time
+        */
+       int days = Days.daysBetween(new DateTime(d1), new DateTime(d2)).getDays();
+       return days;
+
+   }
+
+    public static PrivateKey getPrivateKey(String filename) {
+        try {
+            //URL path = ClassLoader.getSystemResource(filename);
+           // InputStream inputStream = ClassLoader.getSystemResourceAsStream(filename);
+           /* if (path == null) {
+                //The file was not found, insert error handling here
+            }
+            File f = new File(path.toURI());*/
+
+            File f = new File(filename);
+
+            FileInputStream fis = new FileInputStream(f);
+            DataInputStream dis = new DataInputStream(fis);
+            byte[] keyBytes = new byte[(int) f.length()];
+            dis.readFully(keyBytes);
+            dis.close();
+
+            PKCS8EncodedKeySpec spec =
+                    new PKCS8EncodedKeySpec(keyBytes);
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            return kf.generatePrivate(spec);
+
+        } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+        }
+    }
 }

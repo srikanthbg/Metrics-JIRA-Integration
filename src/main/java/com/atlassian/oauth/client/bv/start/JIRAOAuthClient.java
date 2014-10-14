@@ -1,25 +1,22 @@
 package com.atlassian.oauth.client.bv.start;
 
-import com.atlassian.oauth.client.bv.model.jira.Issue;
-import com.atlassian.oauth.client.bv.process.*;
-import com.atlassian.oauth.client.bv.process.Process;
-import com.atlassian.oauth.client.bv.readers.jira.JiraAttributesReader;
-import com.atlassian.oauth.client.bv.utils.JiraProps;
+import com.atlassian.oauth.client.bv.process.jira.Process;
+import com.atlassian.oauth.client.bv.process.jira.ProcessIssue;
+import com.atlassian.oauth.client.bv.process.jira.ProcessProjectIssue;
+import com.atlassian.oauth.client.bv.model.jira.JiraAttributesReader;
+import com.atlassian.oauth.client.bv.service.jira.ComponentService;
+import com.atlassian.oauth.client.bv.service.jira.IssueService;
+import com.atlassian.oauth.client.bv.service.jira.ProjectService;
+import com.atlassian.oauth.client.bv.model.jira.JiraProps;
+import com.atlassian.oauth.client.bv.utils.Util;
 import com.google.common.collect.Lists;
-import com.google.gson.Gson;
 import com.sun.org.apache.xml.internal.security.utils.Base64;
-
-import java.io.*;
-import java.security.KeyFactory;
-import java.security.PrivateKey;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.log4j.Logger;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class JIRAOAuthClient
@@ -29,13 +26,13 @@ public class JIRAOAuthClient
 
     static Logger log = Logger.getLogger(JIRAOAuthClient.class.getName());
     private static final String CALLBACK_URI = "";
-    protected static  String CONSUMER_PRIVATE_KEY = Base64.encode(getPrivateKey("./resources/private.der").getEncoded());
+    protected static  String CONSUMER_PRIVATE_KEY = Base64.encode(Util.getPrivateKey("./resources/private.der").getEncoded());
 
     public enum Command
     {
         REQUEST_TOKEN("requestToken"),
         ACCESS_TOKEN("accessToken"), REQUEST("request"),GET_ALL_PROJECTS("getAllProjects"),
-        GET_ALL_ISSUES("getAllIssues"),GET_ISSUES_OF_PROJECT("getIssuesOfProject");
+        GET_ALL_ISSUES("getAllIssues"), GET_ALL_ISSUES_INCREMENTAL("getAllIssuesIncremental"),GET_ISSUES_OF_PROJECT("getIssuesOfProject");
 
         private String name;
 
@@ -69,19 +66,24 @@ public class JIRAOAuthClient
             }
             String action = arguments.get(0);
 
-            if (Command.REQUEST_TOKEN.getName().equals(action)) {
+            if (Command.REQUEST_TOKEN.getName().equals(action))
+
+            {
 
                 String baseUrl = jiraProps.getJiraBase();
                 String callBack = "";
 
                 AtlassianOAuthClient jiraoAuthClient = new AtlassianOAuthClient(CONSUMER_KEY, CONSUMER_PRIVATE_KEY, baseUrl, callBack);
-                //STEP 1: Get request token
                 TokenSecretVerifierHolder requestToken = jiraoAuthClient.getRequestToken();
                 String authorizeUrl = jiraoAuthClient.getAuthorizeUrlForToken(requestToken.token);
                 log.info("Token is " + requestToken.token);
                 log.info("Token secret is " + requestToken.secret);
                 log.info("Retrieved request token. go to " + authorizeUrl);
-            } else if (Command.ACCESS_TOKEN.getName().equals(action)) {
+            }
+
+            else if (Command.ACCESS_TOKEN.getName().equals(action))
+
+            {
                 String baseUrl = jiraProps.getJiraBase();
                 AtlassianOAuthClient jiraoAuthClient = new AtlassianOAuthClient(CONSUMER_KEY, CONSUMER_PRIVATE_KEY, baseUrl, CALLBACK_URI);
                 String requestToken = jiraProps.getRequestToken();
@@ -89,36 +91,58 @@ public class JIRAOAuthClient
                 String verifier = jiraProps.getVerifier();
                 String accessToken = jiraoAuthClient.swapRequestTokenForAccessToken(requestToken, tokenSecret, verifier);
                 log.info("Access token is : " + accessToken);
-            } else if (Command.REQUEST.getName().equals(action)) {
-            /*
-                Sample Request Test
-             */
+            }
+
+            else if (Command.REQUEST.getName().equals(action)) {
+
+                /*
+                     Sample request
+                 */
 
                 AtlassianOAuthClient jiraoAuthClient = new AtlassianOAuthClient(CONSUMER_KEY, CONSUMER_PRIVATE_KEY, null, CALLBACK_URI);
                 String accessToken = arguments.get(1);
                 String url = arguments.get(2);
                 String responseAsString = jiraoAuthClient.makeAuthenticatedRequest(url, accessToken);
                 log.info("RESPONSE IS" + responseAsString);
-            } else {
+            }
 
+
+            else {
+
+                /*
+                    JIRA operations start here
+                 */
 
                 AtlassianOAuthClient jiraoAuthClient = new AtlassianOAuthClient(CONSUMER_KEY, CONSUMER_PRIVATE_KEY, null, CALLBACK_URI);
                 JiraAttributesReader jiraAttributesReader = new JiraAttributesReader(jiraoAuthClient, jiraProps);
                 Map<Object, Object> params = new HashMap<Object, Object>();
 
 
-                if (Command.GET_ALL_ISSUES.getName().equals(action)) {
-                    Process process = new ProcessIssue();
+                if (Command.GET_ALL_ISSUES.getName().equals(action))
+                {
+                    ComponentService issueService = new IssueService();
                     params.clear();
-                    process.processModel(jiraAttributesReader, context, params);
+                    issueService.insertBatch(jiraAttributesReader,context,params);
+
                 }
 
-                else if (Command.GET_ALL_PROJECTS.getName().equals(action)) {
+                if(Command.GET_ALL_ISSUES_INCREMENTAL.getName().equals(action))
+                {
+                    params.put("incremental",true);
 
-                    Process process = new ProcessProject();
+
+                }
+
+                else if (Command.GET_ALL_PROJECTS.getName().equals(action))
+                {
+
+                    ComponentService projectService = new ProjectService();
                     params.clear();
-                    process.processModel(jiraAttributesReader, context, params);
-                } else if (Command.GET_ISSUES_OF_PROJECT.getName().equals(action)) {
+                    projectService.insertBatch(jiraAttributesReader,context,params);
+                }
+
+                else if (Command.GET_ISSUES_OF_PROJECT.getName().equals(action))
+                {
 
                     Process process = new ProcessProjectIssue();
                     String projectName = arguments.get(1);
@@ -126,16 +150,21 @@ public class JIRAOAuthClient
                     params.clear();
                     params.put("projectName", projectName);
 
-                    process.processModel(jiraAttributesReader, context, params);
-                } else {
+                    //process.processModel(jiraAttributesReader);
+                }
+
+                else
+                {
                     log.error("Command " + action + " not supported. Only " + getCommandNames() + " are supported.");
                 }
             }
-        }catch(Exception e)
+        }
+
+        catch(Exception e)
         {
             log.error("FATAL exception processing JIRA data");
             log.error(e.getMessage());
-            log.error(e.getCause());
+            log.error(e.getStackTrace());
         }
     }
 
@@ -147,34 +176,6 @@ public class JIRAOAuthClient
             names += value.getName() + " ";
         }
         return names;
-    }
-
-    private static PrivateKey getPrivateKey(String filename) {
-        try {
-            //URL path = ClassLoader.getSystemResource(filename);
-           // InputStream inputStream = ClassLoader.getSystemResourceAsStream(filename);
-           /* if (path == null) {
-                //The file was not found, insert error handling here
-            }
-            File f = new File(path.toURI());*/
-
-            File f = new File(filename);
-
-            FileInputStream fis = new FileInputStream(f);
-            DataInputStream dis = new DataInputStream(fis);
-            byte[] keyBytes = new byte[(int) f.length()];
-            dis.readFully(keyBytes);
-            dis.close();
-
-            PKCS8EncodedKeySpec spec =
-                    new PKCS8EncodedKeySpec(keyBytes);
-            KeyFactory kf = KeyFactory.getInstance("RSA");
-            return kf.generatePrivate(spec);
-
-        } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-        }
     }
 
 

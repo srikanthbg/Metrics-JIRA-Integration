@@ -1,14 +1,17 @@
-package com.atlassian.oauth.client.bv.dao.jira;
+package com.atlassian.oauth.client.bv.dao.jira.impl;
 
 import com.atlassian.oauth.client.bv.dao.AbstractBaseDAO;
 import com.atlassian.oauth.client.bv.model.jira.Issue;
-import java.sql.PreparedStatement;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Date;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
-import static com.atlassian.oauth.client.bv.dao.support.SQLConstants.WRITE_ISSUE;
+
+import static com.atlassian.oauth.client.bv.dao.jira.support.SQLConstants.GET_LAST_RUN_DATE;
+import static com.atlassian.oauth.client.bv.dao.jira.support.SQLConstants.WRITE_ISSUE;
 
 /**
  * Created by Srikanth BG on 9/23/14.
@@ -17,7 +20,7 @@ import static com.atlassian.oauth.client.bv.dao.support.SQLConstants.WRITE_ISSUE
 @Repository("IssueDAO")
 public class IssueDAO extends AbstractBaseDAO {
 
-    public void insertBatch(final List<Issue> issues){
+    public void insertBatch(final List<Issue> issues) {
 
         	          getJdbcTemplate().batchUpdate(WRITE_ISSUE, new BatchPreparedStatementSetter() {
 
@@ -40,4 +43,11 @@ public class IssueDAO extends AbstractBaseDAO {
                           }
                       });
                 }
+
+    public Date getLastRunDate(){
+
+
+        return getJdbcTemplate().queryForObject(GET_LAST_RUN_DATE, Date.class);
+
+    }
 }

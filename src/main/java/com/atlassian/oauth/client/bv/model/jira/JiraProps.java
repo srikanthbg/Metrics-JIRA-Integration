@@ -1,4 +1,4 @@
-package com.atlassian.oauth.client.bv.utils;
+package com.atlassian.oauth.client.bv.model.jira;
 
 /**
  * Created by Srikanth BG on 10/7/14.

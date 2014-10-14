@@ -31,10 +31,7 @@ VALUES
 '2014-07-12',
 '2014-07-13')  ON DUPLICATE KEY UPDATE createDate='2014-01-10';
 
-/*
-To swap in a production config for #2, just pass -Dmycompany.env=prod to java.
-Similarly your coworker can pass -Dmycoworker=/some/path/config.properties if he/she wants.
- */
+SELECT * FROM bv_metrics.IssuesLastRun order by LastRunDate desc LIMIT 1;
 
 
 

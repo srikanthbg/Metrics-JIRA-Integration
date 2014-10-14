@@ -1,11 +1,7 @@
 package com.atlassian.oauth.client.bv.start;
 
 import com.google.common.collect.ImmutableList;
-import net.oauth.OAuth;
-import net.oauth.OAuthAccessor;
-import net.oauth.OAuthConsumer;
-import net.oauth.OAuthMessage;
-import net.oauth.OAuthServiceProvider;
+import net.oauth.*;
 import net.oauth.client.OAuthClient;
 import net.oauth.client.httpclient4.HttpClient4;
 import net.oauth.signature.RSA_SHA1;

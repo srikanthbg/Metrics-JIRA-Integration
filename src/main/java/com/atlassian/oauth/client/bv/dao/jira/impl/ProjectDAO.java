@@ -1,8 +1,7 @@
-package com.atlassian.oauth.client.bv.dao.jira;
+package com.atlassian.oauth.client.bv.dao.jira.impl;
 
 import com.atlassian.oauth.client.bv.dao.AbstractBaseDAO;
 import com.atlassian.oauth.client.bv.model.jira.Project;
-import com.atlassian.oauth.client.bv.start.JIRAOAuthClient;
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
@@ -11,7 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 
-import static com.atlassian.oauth.client.bv.dao.support.SQLConstants.WRITE_PROJECT;
+import static com.atlassian.oauth.client.bv.dao.jira.support.SQLConstants.WRITE_PROJECT;
 
 /**
  * Created by Srikanth BG on 9/23/14.
@@ -42,4 +41,8 @@ public class ProjectDAO extends AbstractBaseDAO {
                       });
                 }
 
+    public List<Project> getProjects()
+    {
+        return null;
+    }
 }

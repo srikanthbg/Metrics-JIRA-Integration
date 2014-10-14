@@ -1,4 +1,4 @@
-package com.atlassian.oauth.client.bv.dao.support;
+package com.atlassian.oauth.client.bv.dao.jira.support;
 
 /**
  * Created by Srikanth BG on 9/23/14.
@@ -12,4 +12,6 @@ public interface SQLConstants {
 
     String WRITE_PROJECT = "INSERT INTO bv_metrics.project (`projectID`,`name`,`key`) VALUES (?,?,?) ON DUPLICATE KEY UPDATE " +
                             "`projectID`=VALUES(projectID),`name`=VALUES(name),`key`=VALUES(key)";
+
+    String GET_LAST_RUN_DATE = "SELECT * FROM bv_metrics.IssuesLastRun order by LastRunDate desc LIMIT 1";
 }
