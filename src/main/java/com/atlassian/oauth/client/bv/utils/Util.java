@@ -10,6 +10,7 @@ import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.sql.Date;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
@@ -54,6 +55,14 @@ public class Util {
        return days;
 
    }
+
+    public static Date getTodaysDate()
+    {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        java.util.Date date = new java.util.Date();
+        return Date.valueOf(dateFormat.format(date));
+
+    }
 
     public static PrivateKey getPrivateKey(String filename) {
         try {

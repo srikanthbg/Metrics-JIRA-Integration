@@ -11,7 +11,7 @@ public interface SQLConstants {
                          "`assignee`=VALUES(assignee), `createDate`=VALUES(createDate),`updateDate`=VALUES(updateDate)";
 
     String WRITE_PROJECT = "INSERT INTO bv_metrics.project (`projectID`,`name`,`key`) VALUES (?,?,?) ON DUPLICATE KEY UPDATE " +
-                            "`projectID`=VALUES(projectID),`name`=VALUES(name),`key`=VALUES(key)";
+                            "`projectID`=VALUES(projectID),`name`=VALUES(name)";
 
-    String GET_LAST_RUN_DATE = "SELECT * FROM bv_metrics.IssuesLastRun order by LastRunDate desc LIMIT 1";
+    String GET_LAST_RUN_DATE = "SELECT LastRunDate FROM bv_metrics.IssuesLastRun order by LastRunDate desc LIMIT 1";
 }

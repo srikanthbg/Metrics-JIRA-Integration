@@ -16,6 +16,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import javax.annotation.Resource;
 import java.net.URLEncoder;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,15 +35,10 @@ public class IssueService implements ComponentService {
     public <T> List<T> getComponentList(JiraAttributesReader jiraAttributesReader, ClassPathXmlApplicationContext context, Map params)
 
     {
-
-
-        Process process = new ProcessIssue();
-        String issueResponse = (String)params.get("issueResponse");
-        List<T> list = process.processModel(issueResponse);
-        log.info(list);
-        return list;
-
-
+        /*
+            Issues are always processed in batches. Hence no implementation in this method.
+         */
+        return new ArrayList<T>();
     }
 
     @Override
@@ -56,21 +52,51 @@ public class IssueService implements ComponentService {
         AtlassianOAuthClient atlassianOAuthClient = jiraAttributesReader.getAtlassianOAuthClient();
 
         List<String> failedProjects = new ArrayList<String>();
+        List<String> successProjects = new ArrayList<String>();
 
         JsonParser jsonParser = new JsonParser();
+        Process process = new ProcessIssue();
+        IssueDAO issueDAO = (IssueDAO)context.getBean("IssueDAO");
+        String issuesCount = "";
+        boolean incremental = (Boolean)params.get("incremental");
 
+        Date lastRun = null;
+        Date today = null;
+        int daysSinceLastRun = 0;
+        String daysFilter = "";
+
+
+
+        if(incremental)
+        {
+            lastRun =  issueDAO.getLastRunDate();
+            today = Util.getTodaysDate();
+            daysSinceLastRun = Util.getSqlDateDiff(lastRun, today);
+            /*
+               ex: created or updated > -5d
+             */
+            daysFilter = "&created>'-"+daysSinceLastRun+"d'&updated>'-"+daysSinceLastRun+"d'";
+        }
 
         try {
             for (Project projectObj : projectList)
             {
                 try {
-
-                    {
                         String projectName = projectObj.getName();
-
                         String encodedProjectName = "'" + URLEncoder.encode(projectName, "UTF-8") + "'";
                         String issueCountQuery = props.getJiraServer() + props.getGetIssues() + encodedProjectName +
-                                props.getGetIssuesFilter() + "0";
+                            props.getGetIssuesFilter() + "0";
+
+                        if(incremental)
+                        {
+                            /*
+                                Add days filter for delta days
+                             */
+                               issueCountQuery =issueCountQuery + daysFilter;
+
+                        }
+
+
                         log.info("issue count query --> " + issueCountQuery);
 
                         String issueCountResponse = atlassianOAuthClient.makeAuthenticatedRequest(issueCountQuery, props.getAccessToken());
@@ -81,13 +107,18 @@ public class IssueService implements ComponentService {
                 /*
                 set batch attributes to query JIRA
                 */
-                        String issuesCount = jsonObjectIssueCountObject.get("total").toString();
+                        issuesCount = jsonObjectIssueCountObject.get("total").toString();
+                        log.info("Project Name -->" + projectName + " Total Issues to be loaded --> " + issuesCount);
                         int batchSize = Integer.parseInt(props.getBatchSize());
                         int batchLoopCount = Util.getBatchCount(Integer.parseInt(issuesCount), batchSize);
                         int startAt = 0;
 
                         String issueQuery = props.getJiraServer() +
                                 props.getGetIssues() + encodedProjectName + props.getGetIssuesFilter();
+                        if(incremental)
+                        {
+                            issueQuery = issueQuery + daysFilter;
+                        }
                         String issueQueryLoop = "";
 
                         for (int i = 0; i < batchLoopCount; i++)
@@ -101,26 +132,27 @@ public class IssueService implements ComponentService {
                             String issuesResponse = atlassianOAuthClient.makeAuthenticatedRequest(issueQueryLoop, props.getAccessToken());
                             log.info("Issue response --> " + issuesResponse);
 
-                            params.put("issueResponse", issuesResponse);
-                            List<Issue> issueList = getComponentList(jiraAttributesReader, context, params);
+                            List<Issue>  issueList = process.processModel(issuesResponse);
 
-
-                            issueDao.insertBatch(issueList);
+                            issueDAO.insertBatch(issueList);
 
                         }
-                    }
+                        successProjects.add(projectName);
+                        log.info("successfully loaded projects -->" + successProjects.toString() + "Total issues loaded -->" + issuesCount);
                 } catch (Exception e) {
-                    log.error("Error processing project ISSUES -->" + projectObj.getName() + " Please re-run");
+                    log.error("Error processing project ISSUES -->" + projectObj.getName() + " Please re-run", e);
+                    log.info("continuing to the next project in the queue");
                     failedProjects.add(projectObj.getName());
                     continue;
                 }
             }
-
             log.info("FAILED projects -->" + failedProjects.toString());
+            log.info("SUCCESSFULLY LOADED PROJECTS -->" + successProjects.toString());
         }
             catch(Exception e)
             {
-                log.info("FATAL : Error in processing the project issues : ABORTING");
+
+                log.info("FATAL : Error in processing the project issues : ABORTING", e);
 
             }
 

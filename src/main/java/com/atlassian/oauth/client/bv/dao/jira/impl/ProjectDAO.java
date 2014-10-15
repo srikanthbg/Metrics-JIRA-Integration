@@ -31,7 +31,7 @@ public class ProjectDAO extends AbstractBaseDAO {
                               ps.setInt(1, project.getId());
                               ps.setString(2, project.getName());
                               ps.setString(3, project.getKey());
-                              log.info(i + "-->" + ps);
+                              //log.info(i + "-->" + ps);
                           }
 
                           @Override

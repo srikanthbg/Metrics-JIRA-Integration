@@ -32,7 +32,8 @@ public class JIRAOAuthClient
     {
         REQUEST_TOKEN("requestToken"),
         ACCESS_TOKEN("accessToken"), REQUEST("request"),GET_ALL_PROJECTS("getAllProjects"),
-        GET_ALL_ISSUES("getAllIssues"), GET_ALL_ISSUES_INCREMENTAL("getAllIssuesIncremental"),GET_ISSUES_OF_PROJECT("getIssuesOfProject");
+        GET_ALL_ISSUES("getAllIssues"), GET_ALL_ISSUES_INCREMENTAL("getAllIssuesIncremental"),
+        GET_ISSUES_OF_PROJECT("getIssuesOfProject"),GET_ISSUES_OF_PROJECT_INCREMENTAL("getIssuesOfProjectIncremental");
 
         private String name;
 
@@ -129,8 +130,8 @@ public class JIRAOAuthClient
                 if(Command.GET_ALL_ISSUES_INCREMENTAL.getName().equals(action))
                 {
                     params.put("incremental",true);
-
-
+                    ComponentService issueService = new IssueService();
+                    issueService.insertBatch(jiraAttributesReader,context,params);
                 }
 
                 else if (Command.GET_ALL_PROJECTS.getName().equals(action))
@@ -153,6 +154,18 @@ public class JIRAOAuthClient
                     //process.processModel(jiraAttributesReader);
                 }
 
+                else if (Command.GET_ISSUES_OF_PROJECT_INCREMENTAL.getName().equals(action))
+                {
+
+                    Process process = new ProcessProjectIssue();
+                    String projectName = arguments.get(1);
+
+                    params.clear();
+                    params.put("projectName", projectName);
+
+                    //process.processModel(jiraAttributesReader);
+                }
+
                 else
                 {
                     log.error("Command " + action + " not supported. Only " + getCommandNames() + " are supported.");
@@ -164,7 +177,8 @@ public class JIRAOAuthClient
         {
             log.error("FATAL exception processing JIRA data");
             log.error(e.getMessage());
-            log.error(e.getStackTrace());
+            log.error(e);
+            e.printStackTrace();
         }
     }
 

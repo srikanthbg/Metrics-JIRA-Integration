@@ -35,7 +35,7 @@ public class IssueDAO extends AbstractBaseDAO {
                               ps.setString(7, issue.getReporter());
                               ps.setDate(8, issue.getCreateDate());
                               ps.setDate(9, issue.getUpdateDate());
-                              logger.info("prepared stmt -->" +ps);
+                              //logger.info("prepared stmt -->" +ps);
                           }
 
                           public int getBatchSize() {
@@ -46,8 +46,12 @@ public class IssueDAO extends AbstractBaseDAO {
 
     public Date getLastRunDate(){
 
-
         return getJdbcTemplate().queryForObject(GET_LAST_RUN_DATE, Date.class);
 
+    }
+
+    public void updateLastRunDate()
+    {
+        getJdbcTemplate().execute("");
     }
 }
