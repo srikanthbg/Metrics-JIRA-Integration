@@ -5,8 +5,8 @@ import com.atlassian.oauth.client.bv.model.jira.Issue;
 import com.atlassian.oauth.client.bv.model.jira.JiraAttributesReader;
 import com.atlassian.oauth.client.bv.model.jira.JiraProps;
 import com.atlassian.oauth.client.bv.model.jira.Project;
-import com.atlassian.oauth.client.bv.process.jira.*;
 import com.atlassian.oauth.client.bv.process.jira.Process;
+import com.atlassian.oauth.client.bv.process.jira.ProcessIssue;
 import com.atlassian.oauth.client.bv.start.AtlassianOAuthClient;
 import com.atlassian.oauth.client.bv.utils.Util;
 import com.google.gson.JsonObject;
@@ -28,12 +28,12 @@ import java.util.Map;
 /**
  * Created by Srikanth BG on 10/14/14.
  */
-public class IssueService implements ComponentService {
+public class IncrementalIssueService implements ComponentService {
 
     @Resource(name = "IssueDAO")
     private IssueDAO issueDao;
 
-    static Logger log = Logger.getLogger(IssueService.class.getName());
+    static Logger log = Logger.getLogger(IncrementalIssueService.class.getName());
 
     @Override
     public <T> List<T> getComponentList(JiraAttributesReader jiraAttributesReader, ClassPathXmlApplicationContext context, Map params)
@@ -63,6 +63,13 @@ public class IssueService implements ComponentService {
         IssueDAO issueDAO = (IssueDAO)context.getBean("IssueDAO");
         String issuesCount = "";
 
+
+
+        Date lastRun = issueDAO.getLastRunDate();
+        Date today = Util.getTodaysDate();;
+        int daysSinceLastRun = Util.getSqlDateDiff(lastRun, today);
+        String daysFilter = "&&updated>-"+daysSinceLastRun+"d";
+        InputStream inputStream;
         String issueCountResponse="";
         JsonObject jsonObjectIssueCountObject;
 
@@ -71,16 +78,19 @@ public class IssueService implements ComponentService {
             {
                 try {
                         String projectName = projectObj.getName();
-                        String encodedProjectName = "'" + URLEncoder.encode(projectName, "UTF-8") + "'";
-                        String issueCountQuery = props.getJiraServer() + props.getGetIssues() + encodedProjectName +props.getGetIssuesFilter() + "0";
                             /*
-                                get the issue count using GET
+                                Get the issue count using POST
+                                Add days filter for delta days
                              */
-                        log.info("issue count query --> " + issueCountResponse);
 
-                        issueCountResponse = atlassianOAuthClient.makeAuthenticatedRequest(issueCountQuery, props.getAccessToken());
-                        log.info("Issue count response --> " + issueCountResponse);
+                        StringBuffer strBuffer = new StringBuffer("{\"jql\":\"project = '").append(projectName).append("'")
+                                                .append(daysFilter).append("\"")
+                                                .append(",\"startAt\":0,\"maxResults\":15,\"fields\":[\"id\",\"key\",\"assignee\",\"issuetype\",\"reporter\",\"created\",\"updated\",\"priority\",\"project\",\"status\",\"summary\"]}");
+                        log.info("issue count - Incremental Issue Service " +  strBuffer.toString());
 
+                        inputStream = new ByteArrayInputStream(strBuffer.toString().getBytes());
+
+                        issueCountResponse = atlassianOAuthClient.makeAuthenticatedRequestPost(props.getJiraServer()+"search",props.getAccessToken(),inputStream);
                         jsonObjectIssueCountObject = (JsonObject) jsonParser.parse(issueCountResponse);
 
 
@@ -93,20 +103,24 @@ public class IssueService implements ComponentService {
                         int batchLoopCount = Util.getBatchCount(Integer.parseInt(issuesCount), batchSize);
                         int startAt = 0;
 
-                        String issueQuery = props.getJiraServer() +
-                                props.getGetIssues() + encodedProjectName + props.getGetIssuesFilter();
-
-                        String issueQueryLoop = "";
+                        strBuffer = new StringBuffer("");
 
                         for (int i = 0; i < batchLoopCount; i++)
 
                         {
+                            StringBuffer issueQueryLoop =  new StringBuffer("{\"jql\":\"project = '").append(projectName).append("'")
+                                    .append(daysFilter).append("\"")
+                                    .append(",\"fields\":[\"id\",\"key\",\"assignee\",\"issuetype\",\"reporter\",\"created\",\"updated\",\"priority\",\"project\",\"status\",\"summary\"],")
+                                    .append("\"startAt\":").append(startAt).append("}");
 
-                            issueQueryLoop = issueQuery + startAt;
+
+                            log.info("Issue query in loop - Incremental Issue Service - " + issueQueryLoop);
+
+                            inputStream = new ByteArrayInputStream(issueQueryLoop.toString().getBytes());
                             startAt = startAt + batchSize;
-                            log.info("Issue Query --> " + issueQueryLoop);
 
-                            String issuesResponse = atlassianOAuthClient.makeAuthenticatedRequest(issueQueryLoop,props.getAccessToken());
+                            String issuesResponse = atlassianOAuthClient.makeAuthenticatedRequestPost(props.getJiraServer()+"search", props.getAccessToken(), inputStream);
+
                             log.info("Issue response --> " + issuesResponse);
 
                             List<Issue>  issueList = process.processModel(issuesResponse);

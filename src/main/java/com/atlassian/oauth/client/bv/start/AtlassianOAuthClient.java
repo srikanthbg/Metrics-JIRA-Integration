@@ -4,11 +4,14 @@ import com.google.common.collect.ImmutableList;
 import net.oauth.*;
 import net.oauth.client.OAuthClient;
 import net.oauth.client.httpclient4.HttpClient4;
+import net.oauth.http.HttpMessage;
 import net.oauth.signature.RSA_SHA1;
+import org.apache.log4j.Logger;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.*;
 
 import static net.oauth.OAuth.OAUTH_VERIFIER;
 
@@ -17,6 +20,8 @@ import static net.oauth.OAuth.OAUTH_VERIFIER;
  */
 public class AtlassianOAuthClient
 {
+
+    static Logger log = Logger.getLogger(AtlassianOAuthClient.class.getName());
     protected static final String SERVLET_BASE_URL = "/plugins/servlet";
 
     private final String consumerKey;
@@ -95,6 +100,36 @@ public class AtlassianOAuthClient
         {
             throw new RuntimeException("Failed to make an authenticated request.", e);
         }
+    }
+
+    public String makeAuthenticatedRequestPost(String url, String accessToken, InputStream bodyAsStream)
+    {
+        try
+        {
+
+            OAuthAccessor accessor = getAccessor();
+            OAuthClient client = new OAuthClient(new HttpClient4());
+            accessor.accessToken = accessToken;
+            String returnResponse = "";
+
+            OAuthMessage request = accessor.newRequestMessage(OAuthMessage.POST, url, Collections.<Map.Entry<?,?>>emptySet(), bodyAsStream);
+            List<Map.Entry<String,String>> headers = request.getHeaders();
+
+            headers.add(new OAuth.Parameter(HttpMessage.CONTENT_TYPE, "application/json"));
+
+            OAuthMessage response = client.invoke(request, ParameterStyle.QUERY_STRING);
+
+            returnResponse = response.readBodyAsString();
+            log.info(returnResponse);
+
+
+            return returnResponse;
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException("Failed to make an authenticated request.", e);
+        }
+
     }
 
     private final OAuthAccessor getAccessor()

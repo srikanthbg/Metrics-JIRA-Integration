@@ -5,6 +5,7 @@ import com.atlassian.oauth.client.bv.process.jira.ProcessIssue;
 import com.atlassian.oauth.client.bv.process.jira.ProcessProjectIssue;
 import com.atlassian.oauth.client.bv.model.jira.JiraAttributesReader;
 import com.atlassian.oauth.client.bv.service.jira.ComponentService;
+import com.atlassian.oauth.client.bv.service.jira.IncrementalIssueService;
 import com.atlassian.oauth.client.bv.service.jira.IssueService;
 import com.atlassian.oauth.client.bv.service.jira.ProjectService;
 import com.atlassian.oauth.client.bv.model.jira.JiraProps;
@@ -129,8 +130,8 @@ public class JIRAOAuthClient
 
                 if(Command.GET_ALL_ISSUES_INCREMENTAL.getName().equals(action))
                 {
-                    params.put("incremental",true);
-                    ComponentService issueService = new IssueService();
+
+                    ComponentService issueService = new IncrementalIssueService();
                     issueService.insertBatch(jiraAttributesReader,context,params);
                 }
 
