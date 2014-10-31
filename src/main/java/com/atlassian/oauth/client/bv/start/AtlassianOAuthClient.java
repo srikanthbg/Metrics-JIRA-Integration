@@ -8,8 +8,6 @@ import net.oauth.http.HttpMessage;
 import net.oauth.signature.RSA_SHA1;
 import org.apache.log4j.Logger;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.*;
 
